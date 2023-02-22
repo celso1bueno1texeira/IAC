@@ -10,14 +10,39 @@ terraform {
 }    
 
 provider "digitalocean" {
-    token = "dop_v1_0fe7f1291653c6770f4cdb5d363b75927c67cd7dc63a34ee9f26b49a4da18719"
+    token = "dop_v1_800d1499ea0dafdb6e9e8247214d16e5ee103d8006d8a2bd4828c8ad92c6e26e"
 }
 
-resource "digitalocean_droplet" "vm_ubuntu" {
-    image = "ubuntu-22-04-x64"
-    name = "vm-ubuntu"
-    region = "nyc1"
-    size = "s-1vcpu-2gb"
-    
+data "digitalocean_ssh_key" "ssh_key" {
+        name = "ssh_key"
 }
+
+resource "digitalocean_droplet" "web" {
+    image  = "ubuntu-18-04-x64"
+    name   = "vm-ubuntu"
+    region = "nyc1"
+    size   = "s-1vcpu-2gb"
+    ssh_keys = [data.digitalocean_ssh_key.ssh_key.id]
+}
+
+resource "digitalocean_firewall" "web" {
+    name = "only-22-80-and-443"
+
+    droplet_ids = [digitalocean_droplet.web.id]
+
+inbound_rule {
+    protocol         = "tcp"
+    port_range       = "22"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+}
+
+
+outbound_rule {
+    protocol              = "tcp"
+    port_range            = "22"
+    destination_addresses = ["0.0.0.0/0", "::/0"]
+}
+
+}
+
 
